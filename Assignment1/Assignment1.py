@@ -1,0 +1,160 @@
+import cv2
+
+cap = cv2.VideoCapture(0)
+# set timer to measure fps
+def builtIn():
+    timer = cv2.getTickCount()
+    while(True):
+        #### FPS counter 
+        ret, frame = cap.read()
+        # calculate fps
+        fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
+        latency = (cv2.getTickCount() - timer) / cv2.getTickFrequency()*1000
+
+
+        original = frame.copy()
+        blur = 15
+        #blur frame 
+        frame = cv2.GaussianBlur(frame, (blur, blur), 0)
+
+        # update timer
+        timer = cv2.getTickCount()
+
+        ### find the brightest spot 
+        # find the brightest spot in the color image
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Split the channels: Hue, Saturation, and Value
+        h, s, v = cv2.split(hsv)
+
+        # Split the channels: Red, Green, and Blue
+        r, g, b = cv2.split(rgb)
+
+        # Subtract the green and blue channels to isolate red
+        ultraRed = cv2.subtract(r, g)
+        ultraRed = cv2.subtract(ultraRed, b)
+
+        # Find the brightest spot in the Value channel
+        (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(v)
+
+        #find the reddest spot in the R channel
+        (minValRed, maxValRed, minLocRed, maxLocRed) = cv2.minMaxLoc(ultraRed)
+
+        # draw a circle around the maximum red value
+        cv2.circle(original, maxLocRed, 5, (0, 0, 255), 2)
+
+        # draw a circle around the maximum brightness value
+        cv2.circle(original, maxLoc, 5, (255, 0, 0), 2)
+
+        #cv2.circle(ultraRed, maxLocRed, 5, (255, 0, 0), 2)
+
+        # put fps on the frame
+        cv2.putText(original, "FPS: " + str(int(fps)), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+        # put the maximum pixel value on the frame
+        cv2.putText(original, "Max Brigthness: " + str(maxVal), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        cv2.putText(original, "Max Red: " + str(maxValRed), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        cv2.putText(original, "Latency: " + str(latency), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        cv2.imshow('hsv',ultraRed)
+        #print("FPS = ", fps)
+
+        cv2.imshow('frame',original)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):   
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+def myMethod():
+    timer = cv2.getTickCount()
+    while(True):
+        #### FPS counter 
+        ret, frame = cap.read()
+        # calculate fps
+        fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
+        #calculate latency
+        latency = (cv2.getTickCount() - timer) / cv2.getTickFrequency()*1000
+
+        original = frame.copy()
+        blur = 15
+        #blur frame 
+        frame = cv2.GaussianBlur(frame, (blur, blur), 0)
+
+        # update timer
+        timer = cv2.getTickCount()
+
+        ### find the brightest spot 
+        # find the brightest spot in the color image
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Split the channels: Hue, Saturation, and Value
+        h, s, v = cv2.split(hsv)
+
+        # Split the channels: Red, Green, and Blue
+        r, g, b = cv2.split(rgb)
+
+        # Subtract the green and blue channels to isolate red
+        ultraRed = cv2.subtract(r, g)
+        ultraRed = cv2.subtract(ultraRed, b)
+
+        # Find the brightest spot in the Value channel
+        maxVal = 0
+        maxLoc = (0,0)
+        for i in range(len(v)):
+            for j in range(len(v[i])):
+                if v[i][j] > maxVal:
+                    maxVal = v[i][j]
+                    maxLoc = (i,j)
+
+
+        #find the reddest spot in the R channel
+        #loop through the red channel and find the brightest spot
+        maxValRed = 0
+        maxLocRed = (0,0)
+        for i in range(len(ultraRed)):
+            for j in range(len(ultraRed[i])):
+                if ultraRed[i][j] > maxValRed:
+                    maxValRed = ultraRed[i][j]
+                    maxLocRed = (i,j)
+
+        #flip the coordinates
+        maxLoc = (maxLoc[1], maxLoc[0])
+        maxLocRed = (maxLocRed[1], maxLocRed[0])
+
+
+        # draw a circle around the maximum red value
+        cv2.circle(original, maxLocRed, 5, (0, 0, 255), 2)
+
+        # draw a circle around the maximum brightness value
+        cv2.circle(original, maxLoc, 5, (255, 0, 0), 2)
+
+        #cv2.circle(ultraRed, maxLocRed, 5, (255, 0, 0), 2)
+
+        # put fps on the frame
+        cv2.putText(original, "FPS: " + str(int(fps)), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+        # put the maximum pixel value on the frame
+        cv2.putText(original, "Max Brigthness: " + str(maxVal), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        cv2.putText(original, "Max Red: " + str(maxValRed), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        cv2.putText(original, "Latency: " + str(latency), (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
+
+        cv2.imshow('hsv',ultraRed)
+        #print("FPS = ", fps)
+
+        cv2.imshow('frame',original)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):   
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    #builtIn()
+    myMethod()

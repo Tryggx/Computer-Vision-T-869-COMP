@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 # set timer to measure fps
 def builtIn():
     while(True):
@@ -118,7 +118,7 @@ def myMethod():
         cv2.putText(original, "Max Red: " + str(maxValRed), (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
 
         #cv2.imshow('hsv',ultraRed)
-        #print("FPS = ", fps)
+        print("FPS = ", fps)
 
         cv2.imshow('frame',original)
 
@@ -129,5 +129,5 @@ def myMethod():
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    #builtIn()
-    myMethod()
+    builtIn()
+    #myMethod()

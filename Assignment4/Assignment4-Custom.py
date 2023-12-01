@@ -1,13 +1,8 @@
-import torch
 import cv2
 import numpy as np 
-# # from models.yolo import Model  # Assuming 'models' is from the YOLOv5 repository
+import random
+import yaml
 
-# # Load the model architecture
-# model = Model(cfg="C:/Users/trygg/Documents/Master 3.Önn/Computer Vision/Computer-Vision-T-869-COMP/Assignment4/Custom/data.yaml")  # Adjust the path to your model's config file
-# Load the trained weights
-# model.load_state_dict(torch.load('"C:/Users/trygg/Documents/Master 3.Önn/Computer Vision/Computer-Vision-T-869-COMP/Assignment4/Custom/yolov5n.pt"')['model'])
-# model.eval()
 
 # Constants.
 INPUT_WIDTH = 640
@@ -26,11 +21,6 @@ BLACK  = (0,0,0)
 BLUE   = (255,178,50)
 YELLOW = (0,255,255)
 
-# Load PyTorch model
-model = torch.hub.load('Computer-Vision-T-869-COMP/Assignment4/Custom/yolov5',"custom", path="Computer Vision/Computer-Vision-T-869-COMP/Assignment4/Custom/yolov5n.pt", source="local")
-model.eval()  # Set the model to evaluation mode
-
-
 def draw_label(im, label, x, y):
     """Draw text onto image at location."""
     # Get text size.
@@ -41,32 +31,17 @@ def draw_label(im, label, x, y):
     # Display text inside the rectangle.
     cv2.putText(im, label, (x, y + dim[1]), FONT_FACE, FONT_SCALE, YELLOW, THICKNESS, cv2.LINE_AA)
 
-# def pre_process(input_image):
-#     # Resize and normalize the image
-#     # Note: You may need to adjust this preprocessing to match your model's requirements
-#     input_image = cv2.resize(input_image, (INPUT_WIDTH, INPUT_HEIGHT))
-#     input_image = input_image / 255.0  # Normalize
-#     input_image = input_image.transpose((2, 0, 1))  # HWC to CHW
-#     input_image = torch.tensor(input_image, dtype=torch.float32)
-#     input_image = input_image.unsqueeze(0)  # Add batch dimension
-#     return input_image
-def pre_process(input_image):
-    # Resize the image
-    input_image = cv2.resize(input_image, (INPUT_WIDTH, INPUT_HEIGHT))
-    
-    # Normalize the image
-    input_image = input_image / 255.0  
-    
-    # Change the image from HWC to CHW format
-    input_image = input_image.transpose((2, 0, 1))  
-    
-    # Convert the image to a tensor
-    input_image = torch.tensor(input_image, dtype=torch.float32)
-    
-    # Add a batch dimension
-    input_image = input_image.unsqueeze(0)  
-    
-    return input_image
+def pre_process(input_image, net):
+      # Create a 4D blob from a frame.
+      blob = cv2.dnn.blobFromImage(input_image, 1/255,  (INPUT_WIDTH, INPUT_HEIGHT), [0,0,0], 1, crop=False)
+ 
+      # Sets the input to the network.
+      net.setInput(blob)
+ 
+      # Run the forward pass to get output of the output layers.
+      outputs = net.forward(net.getUnconnectedOutLayersNames())
+      return outputs
+
 
 def post_process(input_image, outputs):
       # Lists to hold respective values while unwrapping.
@@ -80,8 +55,6 @@ def post_process(input_image, outputs):
       x_factor = image_width / INPUT_WIDTH
       y_factor =  image_height / INPUT_HEIGHT
       # Iterate through detections.
-      print(rows)
-      print(outputs[0][0][0])
       for r in range(rows):
             row = outputs[0][0][r]
             confidence = row[4]
@@ -120,32 +93,35 @@ def post_process(input_image, outputs):
       return input_image
 
 if __name__ == '__main__':
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(3)
+   
+    # Load class names.
+    classesFile = "./Computer-Vision-T-869-COMP/Assignment4/Custom/data.names"
+    with open(classesFile, 'rt') as f:
+          classes = f.read().rstrip('\n').split('\n')
 
+    # Give the weight files to the model and load the network using       them.
+    modelWeights = "./Computer-Vision-T-869-COMP/Assignment4/Custom/best.onnx"
+    net = cv2.dnn.readNet(modelWeights)
     while(True):
+        times = cv2.getTickCount()
+        # Process image.
         ret, frame = cap.read()
-        if not ret:
-            break
-
-            # Pre-process the frame
-            # Pre-process the frame
-
-        classesFile = "./Computer-Vision-T-869-COMP/Assignment4/Pre-trained/coco.names"
-        classes = []
-        with open(classesFile, 'rt') as f:
-            classes = f.read().rstrip('\n').split('\n')
-        input_tensor = pre_process(frame)
-        
-        # Feed the tensor to the model
-        output = model(input_tensor)
-
-        # Post-process the outputs
-        processed_outputs = post_process(frame,output)
-
-        # Display the processed frame (you might need to adjust this part)
-        cv2.imshow('Output', frame)
+        # print(frame.shape)
+        detections = pre_process(frame, net)
+        img = post_process(frame.copy(), detections)
+        """
+        Put efficiency information. The function getPerfProfile returns       the overall time for inference(t) 
+        and the timings for each of the layers(in layersTimes).
+        """
+        t, _ = net.getPerfProfile()
+        label = 'Inference time: %.2f ms' % (t * 1000.0 /  cv2.getTickFrequency())
+        fps = cv2.getTickFrequency() / (cv2.getTickCount() - times)
+        cv2.putText(img, "FPS: " + str(fps), (20, 80), FONT_FACE, FONT_SCALE, (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.putText(img, label, (20, 40), FONT_FACE, FONT_SCALE,  (0, 0, 255), 2, cv2.LINE_AA)
+        cv2.imshow('Output', img)
+        # cv2.waitKey(0)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
     cap.release()
     cv2.destroyAllWindows()

@@ -94,19 +94,13 @@ def post_process(input_image, outputs):
 
 if __name__ == '__main__':
     cap = cv2.VideoCapture(3)
-    # cap = cv2.VideoCapture(0)
-    #Load yaml file
-    # file = open("C:/Users/trygg/Documents/Master 3.Önn/Computer Vision/Computer-Vision-T-869-COMP/Assignment4/coco.yaml", encoding="utf8")
-    # print(file)
-    # data = yaml.load(file, Loader=yaml.FullLoader)
-    # print(data["names"])
+   
     # Load class names.
     classesFile = "./Computer-Vision-T-869-COMP/Assignment4/Pre-trained/coco.names"
     classes = []
     with open(classesFile, 'rt') as f:
           classes = f.read().rstrip('\n').split('\n')
-    # Load image.
-    # frame = cv2.imread('./Computer-Vision-T-869-COMP/Assignment4/sample.jpg')
+
     # Give the weight files to the model and load the network using       them.
     modelWeights = "./Computer-Vision-T-869-COMP/Assignment4/Pre-trained/models/yolov5n.onnx"
     net = cv2.dnn.readNet(modelWeights)

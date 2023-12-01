@@ -4,7 +4,7 @@ import random
 
 
 
-def ransac_line_fitting(edges, num_iterations=200, threshold=5, k=10, proximity=100, linearity_threshold=0.8):
+def ransac_line_fitting(edges, num_iterations=200, threshold=0.2, k=20, proximity=450):
     best_line = None
     best_support = 0
     best_inliers = []
@@ -19,9 +19,9 @@ def ransac_line_fitting(edges, num_iterations=200, threshold=5, k=10, proximity=
         idx = random.sample(range(0, len(edge_points), k), 2)
         points = [edge_points[i] for i in idx]
         
-        # print(np.linalg.norm(np.subtract(points[0], points[1])))
-        # if np.linalg.norm(np.subtract(points[0], points[1])) > proximity:
-        #     continue
+        #print(np.linalg.norm(np.subtract(points[0], points[1])))
+        if np.linalg.norm(np.subtract(points[0], points[1])) < proximity:
+            continue
 
         (x1, y1), (x2, y2) = points
         if x2 != x1:
@@ -33,11 +33,15 @@ def ransac_line_fitting(edges, num_iterations=200, threshold=5, k=10, proximity=
                 if abs((m * x + b) - y) < threshold:
                     inliers.append((x, y))
 
-            if len(inliers) > best_support:
-                best_support = len(inliers)
+            # if len(inliers) > best_support:
+            #     best_support = len(inliers)
+            #     best_line = (m, b)
+            #     best_inliers = inliers
+            score = len(inliers) / len(edge_points)
+            if score > best_support:
+                best_support = score
                 best_line = (m, b)
                 best_inliers = inliers
-
 
     return best_line, best_inliers
 
@@ -47,8 +51,9 @@ while(True):
     time = cv2.getTickCount()
     ret, frame = cap.read()
 
-    # Use a different edge detector or fine-tune Canny
-    edges = cv2.Canny(frame, 400, 600)
+    
+
+    edges = cv2.Canny(frame, 400, 450)
 
     edge_points = np.where(edges == 255)
     best_line, inliers = ransac_line_fitting(edge_points, num_iterations=200, threshold=5, k=10, proximity=50)
@@ -62,7 +67,8 @@ while(True):
             cv2.circle(frame, (x, y), 2, (255, 0, 0), -1)
 
 
-    frame_resized_back = cv2.resize(frame, (frame.shape[1], frame.shape[0]))
+    #frame_resized_back = cv2.resize(frame, (frame.shape[1], frame.shape[0]))
+    frame_resized_back = frame
     time2 = cv2.getTickCount()
     calc_time = (time2 - time) / cv2.getTickFrequency() * 1000
     fps = cv2.getTickFrequency() / (cv2.getTickCount() - time)

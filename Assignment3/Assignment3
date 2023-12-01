@@ -227,7 +227,7 @@ while(True):
     cv2.putText(frame, "Latency: " + str(int(calc_time)) + " ms", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
     cv2.putText(frame, "FPS: " + str(int(fps)), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 0, 255), 2)
     #cv2.imshow('hough',line_image)
-    cv2.imshow('edges', edges)
+    
     cv2.imshow('frame', frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
